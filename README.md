@@ -1,6 +1,10 @@
 # docker:git with git-crypt and kubectl
 
-Docker image derived from docker:git with addition of git-crypt and kubectl.
+Docker image derived from `docker:git` with addition of:
+
+* git-crypt
+* kubectl
+* kustomize
 
 Example usage in Gitlab CI:
 
@@ -45,6 +49,15 @@ deploy:
     - docker push $DOCKER_IMAGE
     - mkdir ~/.kube
     - cp k8s/prod/secrets/kubectl.yaml ~/.kube/config
-    - cd k8s
-    - . ./apply.sh $DOCKER_TAG
+    - cd k8s/prod
+    - kustomize edit set namespace foo
+    - kustomize edit set image $DOCKER_IMAGE
+    - |
+      cat >> kustomization.yaml <<EOF
+      commonLabels:
+        kubectl.app: foo
+      EOF
+    - cat kustomization.yaml
+    - kubectl apply -k . --prune -l kubectl.app=foo
+
 ```
